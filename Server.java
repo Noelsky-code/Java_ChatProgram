@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.Scanner;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Date;
 
 
 
@@ -26,9 +27,9 @@ public class Server {
             serverSocket = new ServerSocket();
             InetAddress inetAddress = InetAddress.getLocalHost();
             String localhost = inetAddress.getHostAddress();
-            //serverSocket.bind(new InetSocketAddress(localhost, 9000));
+            serverSocket.bind(new InetSocketAddress(localhost, 9000));
 
-            System.out.println("[server] binding " + localhost);
+            //System.out.println("[server] binding " + localhost);
             System.out.println("[server] waiting client");
             socket = serverSocket.accept();
             InetSocketAddress socketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
@@ -41,18 +42,32 @@ public class Server {
             outputStream = socket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
             Scanner scanner = new Scanner(System.in);
+              /*
+            RSA 키 생성 
+            
+            */
 
             while(true){
+                //System.out.println(123123);
                 String clientMessage = dataInputStream.readUTF(); // 클라이언트로 부터 UTF 인코딩으로 받음
-                System.out.println("Received: "+ clientMessage+"time");
-                dataOutputStream.writeUTF("메시지 전송 완료");// 클라이언트로 보내줌 
-                dataOutputStream.flush(); //버퍼 FLUSH 
-                
+                System.out.println("[server] Received: "+ clientMessage+"time");
                 if(clientMessage.equals("exit")){
-                    dataOutputStream.writeUTF("exit");//클라이언트에게 exit 메시지 전달
-                    System.out.println("Received: exit"+"time");
+                    dataOutputStream.writeUTF("exit");//클라이언트가 exit 입력 -> 클라이언트에게 exit 메시지 전달
+                    dataOutputStream.flush();
+                    socket.close();
                     break;
                 }
+                String outMessage = scanner.nextLine();
+                if(outMessage.equals("exit")){//서버가 exit 입력 -> 클라이언트에게 전달 ,종료 
+                    dataOutputStream.writeUTF("exit");
+                    dataOutputStream.flush();
+                    socket.close();
+                    break;
+                }
+                dataOutputStream.writeUTF(outMessage);// 클라이언트로 보내줌 
+                dataOutputStream.flush(); //버퍼 FLUSH 
+                
+
                 
             }
             /*
