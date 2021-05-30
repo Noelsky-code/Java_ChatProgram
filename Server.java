@@ -1,4 +1,4 @@
-package NS;
+
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -26,10 +26,10 @@ public class Server {
             serverSocket = new ServerSocket();
             InetAddress inetAddress = InetAddress.getLocalHost();
             String localhost = inetAddress.getHostAddress();
-            serverSocket.bind(new InetSocketAddress(localhost, 9000));
+            //serverSocket.bind(new InetSocketAddress(localhost, 9000));
 
             System.out.println("[server] binding " + localhost);
-            
+            System.out.println("[server] waiting client");
             socket = serverSocket.accept();
             InetSocketAddress socketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
             System.out.println("[server] connected by client");
@@ -47,6 +47,7 @@ public class Server {
                 System.out.println("Received: "+ clientMessage+"time");
                 dataOutputStream.writeUTF("메시지 전송 완료");// 클라이언트로 보내줌 
                 dataOutputStream.flush(); //버퍼 FLUSH 
+                
                 if(clientMessage.equals("exit")){
                     dataOutputStream.writeUTF("exit");//클라이언트에게 exit 메시지 전달
                     System.out.println("Received: exit"+"time");
