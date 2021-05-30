@@ -6,13 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.channels.SocketChannel;
-import java.rmi.ConnectException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.Scanner;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 
 public class Client {
@@ -75,7 +72,7 @@ public class Client {
                 
             String receiveString = dataInputStream.readUTF();
 
-            System.out.println("[client] Received: "+receiveString);
+            System.out.println("[client] Received: \""+receiveString+"\" "+get_date());
                 
             if(receiveString.equals("exit")){// 클라이언트가 exit를 보내 서버를 종료 시키고 나서 .. 
                 socket.close();
@@ -84,8 +81,14 @@ public class Client {
         }
 
     }
-        
+    static String get_date(){
+        Date date= new Date();
+        SimpleDateFormat simpl = new SimpleDateFormat("[yyyy/mm/dd/  hh:mm:ss]");
+        String s= simpl.format(date);
+        return s;
+    }
 }
+
 
 /*
 

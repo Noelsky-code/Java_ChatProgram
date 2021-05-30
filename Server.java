@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Date;
+import java.text.SimpleDateFormat;
 
 
 
@@ -50,7 +51,7 @@ public class Server {
             while(true){
                 //System.out.println(123123);
                 String clientMessage = dataInputStream.readUTF(); // 클라이언트로 부터 UTF 인코딩으로 받음
-                System.out.println("[server] Received: "+ clientMessage+"time");
+                System.out.println("[server] Received: \""+ clientMessage+ "\" "+get_date());
                 if(clientMessage.equals("exit")){
                     dataOutputStream.writeUTF("exit");//클라이언트가 exit 입력 -> 클라이언트에게 exit 메시지 전달
                     dataOutputStream.flush();
@@ -89,5 +90,11 @@ public class Server {
             }
         }
 
+    }
+    static String get_date(){
+        Date date= new Date();
+        SimpleDateFormat simpl = new SimpleDateFormat("[yyyy/mm/dd/  hh:mm:ss]");
+        String s= simpl.format(date);
+        return s;
     }
 }
