@@ -3,6 +3,12 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.Scanner;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -21,9 +27,12 @@ public class Server {
 
         OutputStream  outputStream = null;
         DataOutputStream dataOutputStream = null;
+        ObjectOutputStream objectOutputStream = null; 
 
         InputStream inputStream = null;
         DataInputStream dataInputStream = null;
+        ObjectInputStream objectInputStream = null;
+        
         try{
             serverSocket = new ServerSocket();
             InetAddress inetAddress = InetAddress.getLocalHost();
@@ -38,15 +47,25 @@ public class Server {
             System.out.println("[server] Connect with " + socketAddress.getHostString() + " " + socket.getPort());
             
             inputStream = socket.getInputStream();
+            objectInputStream = new ObjectInputStream(inputStream); 
             dataInputStream = new DataInputStream(inputStream);
 
             outputStream = socket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
+            objectOutputStream = new ObjectOutputStream(outputStream);
             Scanner scanner = new Scanner(System.in);
-              /*
-            RSA 키 생성 
+              
+            //RSA 키 생성 
+            System.out.println("Creating RSA Key Pair ...");
+            KeyPair keyPair = genRSAKeyPair();
+            PrivateKey privateKey = keyPair.getPrivate();    
+            PublicKey publicKey = keyPair.getPublic();
+            objectOutputStream.writeObject(publicKey);
+            objectOutputStream.flush();
+            //System.out.println(privateKey);
+            //System.out.println(publicKey); 
             
-            */
+            
 
             while(true){
                 //System.out.println(123123);
@@ -91,10 +110,17 @@ public class Server {
         }
 
     }
-    static String get_date(){
+    public static String get_date(){
         Date date= new Date();
         SimpleDateFormat simpl = new SimpleDateFormat("[yyyy/mm/dd/  hh:mm:ss]");
         String s= simpl.format(date);
         return s;
+    }
+    public static KeyPair genRSAKeyPair() throws NoSuchAlgorithmException{
+        SecureRandom secureRandom = new SecureRandom();
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(2048,secureRandom);
+        KeyPair keyPair = gen.genKeyPair();
+        return keyPair;
     }
 }

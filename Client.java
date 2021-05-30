@@ -4,8 +4,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.security.PublicKey;
 import java.net.InetAddress;
 import java.util.Scanner;
 import java.util.Date;
@@ -13,14 +17,16 @@ import java.text.SimpleDateFormat;
 
 
 public class Client {
-    public static void main(String[] args) throws IOException, InterruptedException{
+    public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException{
         Socket socket = null;
 
         OutputStream outputStream = null;
         DataOutputStream dataOutputStream = null;
+        ObjectOutputStream objectOutputStream = null;
 
         InputStream inputStream = null;
         DataInputStream dataInputStream = null;
+        ObjectInputStream objectInputStream = null;
         
         Scanner scanner = new Scanner(System.in);
 
@@ -58,10 +64,15 @@ public class Client {
 
         outputStream = socket.getOutputStream();
         dataOutputStream = new DataOutputStream(outputStream);
-            
-
+        objectOutputStream = new ObjectOutputStream(outputStream);
+    
         inputStream = socket.getInputStream();
         dataInputStream = new DataInputStream(inputStream);
+        objectInputStream = new ObjectInputStream(inputStream);
+
+        PublicKey publicKey = (PublicKey) objectInputStream.readObject();
+        System.out.println("Received Public Key: "+publicKey);
+        
 
         while(true){
             System.out.println("[client] Write Message: ");
