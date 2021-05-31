@@ -60,6 +60,7 @@ public class Server {
             KeyPair keyPair = genRSAKeyPair();
             PrivateKey privateKey = keyPair.getPrivate();    
             PublicKey publicKey = keyPair.getPublic();
+            // 공개키 전달.
             objectOutputStream.writeObject(publicKey);
             objectOutputStream.flush();
             //System.out.println(privateKey);
