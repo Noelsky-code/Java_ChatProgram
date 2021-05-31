@@ -3,6 +3,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -20,10 +21,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Base64;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.text.SimpleDateFormat;
 
 
@@ -67,7 +71,7 @@ public class Server {
             Scanner scanner = new Scanner(System.in);
               
             //RSA 키 생성 
-            System.out.println("Creating RSA Key Pair ...");
+            System.out.println("[server] Creating RSA Key Pair ...");
             KeyPair keyPair = genRSAKeyPair();
             PrivateKey privateKey = keyPair.getPrivate();    
             PublicKey publicKey = keyPair.getPublic();
@@ -81,40 +85,47 @@ public class Server {
             byte[] secretKey_encrypted = (byte[])objectInputStream.readObject();
             byte[] iv_encrypted = (byte[])objectInputStream.readObject();
             System.out.println();
-            System.out.println("Received AES Key: "+ new String(Base64.getEncoder().encode(secretKey_encrypted)));
+            System.out.println("[server] Received AES Key: "+ new String(Base64.getEncoder().encode(secretKey_encrypted)));
             System.out.println();
-            System.out.println("Received iv: "+ new String(Base64.getEncoder().encode(iv_encrypted)));
+            System.out.println("[server] Received iv: "+ new String(Base64.getEncoder().encode(iv_encrypted)));
             System.out.println();
             //대칭키 복호화 , iv 복호화. 
             SecretKey secretKey = new SecretKeySpec(RSA_Decrypt(secretKey_encrypted, privateKey),"AES");
             IvParameterSpec iv = new IvParameterSpec(RSA_Decrypt(iv_encrypted,privateKey));
             //
-            System.out.println("Descrypted AES Key: "+ new String(Base64.getEncoder().encode(secretKey.getEncoded())));
+            System.out.println("[server] Descrypted AES Key: "+ new String(Base64.getEncoder().encode(secretKey.getEncoded())));
             System.out.println();
-            System.out.println("Descrpyed iv: "+new String(Base64.getEncoder().encode(iv.getIV())));
+            System.out.println("[server] Descrpyed iv: "+new String(Base64.getEncoder().encode(iv.getIV())));
             System.out.println();
             // 키교환 완료 
 
 
 
             while(true){
-                //System.out.println(123123);
-                String clientMessage = dataInputStream.readUTF(); // 클라이언트로 부터 UTF 인코딩으로 받음
+                //클라이언트가 보낸 메시지 복호, 출력 
+                String clientMessage_encrypted = dataInputStream.readUTF(); // 클라이언트로 부터 UTF 인코딩으로 받음
+                String clientMessage = AES256_Decrypt(secretKey, iv, clientMessage_encrypted);
+    
                 System.out.println("[server] Received: \""+ clientMessage+ "\" "+get_date());
+                System.out.println("[server] Encrypted Message: \""+ clientMessage_encrypted+"\"");
                 if(clientMessage.equals("exit")){
                     dataOutputStream.writeUTF("exit");//클라이언트가 exit 입력 -> 클라이언트에게 exit 메시지 전달
                     dataOutputStream.flush();
                     socket.close();
                     break;
                 }
+
+                //서버가 보낼 메시지 암호화 
                 String outMessage = scanner.nextLine();
+                String outMessage_encrypted = AES256_Encrypt(secretKey, iv, outMessage);
                 if(outMessage.equals("exit")){//서버가 exit 입력 -> 클라이언트에게 전달 ,종료 
                     dataOutputStream.writeUTF("exit");
+                    //System.out.println("Connection closed");
                     dataOutputStream.flush();
                     socket.close();
                     break;
                 }
-                dataOutputStream.writeUTF(outMessage);// 클라이언트로 보내줌 
+                dataOutputStream.writeUTF(outMessage_encrypted);// 클라이언트로 보내줌 
                 dataOutputStream.flush(); //버퍼 FLUSH 
                 
 
@@ -137,10 +148,10 @@ public class Server {
 
     }
     public static String get_date(){
-        Date date= new Date();
-        SimpleDateFormat simpl = new SimpleDateFormat("[yyyy/mm/dd/  hh:mm:ss]");
-        String s= simpl.format(date);
-        return s;
+        LocalDateTime date= LocalDateTime.now();
+        //SimpleDateFormat simpl = new SimpleDateFormat("[yyyy/mm/dd/  hh:mm:ss]");
+        String s= date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd hh:mm:ss"));
+        return "["+s+"]";
     }
     public static KeyPair genRSAKeyPair() throws NoSuchAlgorithmException{
         SecureRandom secureRandom = new SecureRandom();
