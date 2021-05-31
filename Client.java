@@ -109,20 +109,34 @@ public class Client {
         //공개키 받기  
         PublicKey publicKey = (PublicKey) objectInputStream.readObject();
         // 공개키 출력 .. 어떻게? 
-        System.out.println("Received Public Key: " );
-        
+        System.out.println();
+        System.out.println("Received Public Key: " +new String(Base64.getEncoder().encode(publicKey.getEncoded()))  );
+        System.out.println();
         //대칭키 , iv 생성
         System.out.println("Creating AES 256 KEY...");
         SecretKey secretKey = secretKey_generator();
         IvParameterSpec iv = Iv_generator();
+        System.out.println();
         //대칭키 출력 .. 인코딩 
-        System.out.println("AES 256 KEY : " );
+        System.out.println("AES 256 KEY : "+new String(Base64.getEncoder().encode(secretKey.getEncoded())));
+        System.out.println();
+        System.out.println("iv: "+new String(Base64.getEncoder().encode(iv.getIV())));
+        System.out.println();
+        
+        //대칭키 암호화 , iv 암호화. 
         byte[] secretKey_encrypted = RSA_Encrypt(secretKey.getEncoded(), publicKey);
         byte[] iv_encrypted = RSA_Encrypt(iv.getIV(), publicKey);
         //암호화된 대칭키, iv 전달. 
+        System.out.println("Encrypted AES Key: "+new String(Base64.getEncoder().encode(secretKey_encrypted)));
+        System.out.println();
+        System.out.println("Encrypted iv: "+ new String(Base64.getEncoder().encode(iv_encrypted)));
+        System.out.println();
+        objectOutputStream.writeObject(secretKey_encrypted);
+        objectOutputStream.flush();
+        objectOutputStream.writeObject(iv_encrypted);
+        objectOutputStream.flush();
 
-
-        
+        // 키교환 완료         
 
 
 
@@ -176,7 +190,7 @@ public class Client {
         return out;
     } 
     public static String AES256_Decrypt(SecretKey secretKey,IvParameterSpec iv,String encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException{
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");// 자바에서 PKCS5 == PKCS7
         cipher.init(Cipher.DECRYPT_MODE,secretKey,iv);
         byte[] decrypted = Base64.getDecoder().decode(encrypted);
         return new String(cipher.doFinal(decrypted),"UTF-8");

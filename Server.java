@@ -3,6 +3,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -10,8 +11,18 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Scanner;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Base64;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
@@ -64,9 +75,27 @@ public class Server {
             objectOutputStream.writeObject(publicKey);
             objectOutputStream.flush();
             //System.out.println(privateKey);
-            //System.out.println(publicKey); 
+            //System.out.println(publicKey);
             
-            
+            //대칭키 , iv 전달 받음
+            byte[] secretKey_encrypted = (byte[])objectInputStream.readObject();
+            byte[] iv_encrypted = (byte[])objectInputStream.readObject();
+            System.out.println();
+            System.out.println("Received AES Key: "+ new String(Base64.getEncoder().encode(secretKey_encrypted)));
+            System.out.println();
+            System.out.println("Received iv: "+ new String(Base64.getEncoder().encode(iv_encrypted)));
+            System.out.println();
+            //대칭키 복호화 , iv 복호화. 
+            SecretKey secretKey = new SecretKeySpec(RSA_Decrypt(secretKey_encrypted, privateKey),"AES");
+            IvParameterSpec iv = new IvParameterSpec(RSA_Decrypt(iv_encrypted,privateKey));
+            //
+            System.out.println("Descrypted AES Key: "+ new String(Base64.getEncoder().encode(secretKey.getEncoded())));
+            System.out.println();
+            System.out.println("Descrpyed iv: "+new String(Base64.getEncoder().encode(iv.getIV())));
+            System.out.println();
+            // 키교환 완료 
+
+
 
             while(true){
                 //System.out.println(123123);
@@ -91,10 +120,6 @@ public class Server {
 
                 
             }
-            /*
-            RSA 키 생성 
-            
-            */
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -123,5 +148,27 @@ public class Server {
         gen.initialize(2048,secureRandom);
         KeyPair keyPair = gen.genKeyPair();
         return keyPair;
+    }
+    public static byte[] RSA_Decrypt(byte[] encrypted,PrivateKey privateKey) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException{ 
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE,privateKey);
+        byte[] decrypted = cipher.doFinal(encrypted);
+
+        return decrypted; 
+    }
+    public static String AES256_Encrypt(SecretKey secretKey,IvParameterSpec iv,String in) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException{
+        Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding"); // 자바에서 PKCS5 == PKCS7 
+        c.init(Cipher.ENCRYPT_MODE,secretKey,iv);
+        
+        byte[] encrypted = c.doFinal(in.getBytes("UTF-8"));
+        String out = new String(Base64.getEncoder().encode(encrypted));
+        return out;
+    } 
+    public static String AES256_Decrypt(SecretKey secretKey,IvParameterSpec iv,String encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException{
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE,secretKey,iv);
+        byte[] decrypted = Base64.getDecoder().decode(encrypted);
+        return new String(cipher.doFinal(decrypted),"UTF-8");
+        
     }
 }
