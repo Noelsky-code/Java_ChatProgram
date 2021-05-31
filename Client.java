@@ -44,9 +44,9 @@ public class Client {
         System.out.println(iv.getIV());
         System.out.println(secretKey.getEncoded());
         String in = "hansol";
-        String enc = AES256_Encode(secretKey,iv,in);
+        String enc = AES256_Encrypt(secretKey,iv,in);
         System.out.println(enc);
-        String dec = AES256_Decode(secretKey,iv,enc);
+        String dec = AES256_Decrypt(secretKey,iv,enc);
         System.out.println(dec);
         */
 
@@ -108,12 +108,22 @@ public class Client {
 
         //공개키 받기  
         PublicKey publicKey = (PublicKey) objectInputStream.readObject();
-        System.out.println("Received Public Key: "+publicKey);
-
+        // 공개키 출력 .. 어떻게? 
+        System.out.println("Received Public Key: " );
+        
         //대칭키 , iv 생성
+        System.out.println("Creating AES 256 KEY...");
         SecretKey secretKey = secretKey_generator();
         IvParameterSpec iv = Iv_generator();
+        //대칭키 출력 .. 인코딩 
+        System.out.println("AES 256 KEY : " );
+        byte[] secretKey_encrypted = RSA_Encrypt(secretKey.getEncoded(), publicKey);
+        byte[] iv_encrypted = RSA_Encrypt(iv.getIV(), publicKey);
+        //암호화된 대칭키, iv 전달. 
+
+
         
+
 
 
 
@@ -157,7 +167,7 @@ public class Client {
         return ivParams;
 
     }
-    public static String AES256_Encode(SecretKey secretKey,IvParameterSpec iv,String in) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException{
+    public static String AES256_Encrypt(SecretKey secretKey,IvParameterSpec iv,String in) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException{
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
         c.init(Cipher.ENCRYPT_MODE,secretKey,iv);
         
@@ -165,12 +175,19 @@ public class Client {
         String out = new String(Base64.getEncoder().encode(encrypted));
         return out;
     } 
-    public static String AES256_Decode(SecretKey secretKey,IvParameterSpec iv,String encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException{
+    public static String AES256_Decrypt(SecretKey secretKey,IvParameterSpec iv,String encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException{
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE,secretKey,iv);
         byte[] decrypted = Base64.getDecoder().decode(encrypted);
         return new String(cipher.doFinal(decrypted),"UTF-8");
         
+    }
+    public static byte[] RSA_Encrypt(byte[] plaintext,PublicKey publicKey) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException{
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE,publicKey);
+        byte[] encrypted = cipher.doFinal(plaintext);
+
+        return encrypted; 
     }
 
 }
